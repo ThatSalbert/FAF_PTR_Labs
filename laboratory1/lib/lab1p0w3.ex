@@ -1,4 +1,5 @@
 defmodule Lab1P0W3 do
+
   def actorPrints do
     receive do
       message ->
@@ -41,61 +42,9 @@ defmodule Lab1P0W3 do
     actorAverager(average)
   end
 
-  def queue(queueList) do
-    newQueueList = receive do
-      :show ->
-        IO.inspect(queueList)
-        queueList
-      {:push, value} ->
-        IO.puts("Pushed: " <> to_string(value))
-        [value | queueList]
-      :pop ->
-        IO.puts("Popped: " <> to_string(List.last(queueList)))
-        List.delete_at(queueList, -1)
-    end
-    queue(newQueueList)
-  end
-
-  def show(pid) do
-    send(pid, :show)
-  end
-
-  def push(pid, value) do
-    send(pid, {:push, value})
-  end
-
-  def pop(pid) do
-    send(pid, :pop)
-  end
-
   def newQueue() do
-    pid = spawn(fn -> Lab1P0W3.queue([]) end)
+    pid = spawn(fn -> Queue.queue([]) end)
     pid
-  end
-
-  def semaphore(num) do
-    semaphoreCounter = receive do
-      :acquire ->
-        if num > 0 do
-          IO.puts("Semaphore acquired")
-          num - 1
-        else
-          IO.puts("Semaphore not acquired")
-          num
-        end
-      :release ->
-        IO.puts("Semaphore released")
-        num + 1
-    end
-    semaphore(semaphoreCounter)
-  end
-
-  def acquire(pid) do
-    send(pid, :acquire)
-  end
-
-  def release(pid) do
-    send(pid, :release)
   end
 
   def createSemaphore(num) do
