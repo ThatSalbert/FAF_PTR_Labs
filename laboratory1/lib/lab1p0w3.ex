@@ -48,7 +48,7 @@ defmodule Lab1P0W3 do
   end
 
   def createSemaphore(num) do
-    semaphore = spawn(fn -> Lab1P0W3.semaphore(num) end)
+    semaphore = spawn(fn -> Semaphore.semaphore(num) end)
     semaphore
   end
 end

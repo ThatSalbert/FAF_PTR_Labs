@@ -1,19 +1,24 @@
 defmodule Semaphore do
   def semaphore(num) do
-    semaphoreCounter = receive do
+    counter = receive do
       :acquire ->
         if num > 0 do
-          IO.puts("Semaphore acquired")
+          IO.puts("Acquired")
           num - 1
         else
-          IO.puts("Semaphore not acquired")
+          IO.puts("Waiting")
           num
         end
       :release ->
-        IO.puts("Semaphore released")
-        num + 1
+        if num < 1 do
+          IO.puts("Released")
+          num + 1
+        else
+          IO.puts("Nothing to release")
+          num
+        end
     end
-    semaphore(semaphoreCounter)
+    semaphore(counter)
   end
 
   def acquire(pid) do
