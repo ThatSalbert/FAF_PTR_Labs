@@ -1,6 +1,7 @@
 defmodule Lab1P0W5 do
   def visitWebsite do
     {:ok, response} = HTTPoison.get("https://quotes.toscrape.com/")
+    IO.inspect(response)
     response
   end
 
@@ -15,6 +16,7 @@ defmodule Lab1P0W5 do
         %{quote_author: quote_author, quote_text: quote_text, quote_tags: quote_tags}
       end
     )
+    IO.inspect(quote_map)
     quote_map
   end
 
@@ -23,3 +25,5 @@ defmodule Lab1P0W5 do
     File.write("quotes.json", json_data)
   end
 end
+
+# Lab1P0W5.mapToJson(Lab1P0W5.extractQuotes(Lab1P0W5.visitWebsite))
