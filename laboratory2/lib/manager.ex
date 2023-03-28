@@ -1,4 +1,4 @@
-defmodule Lab2P1W3.Manager do
+defmodule Manager do
   use GenServer
 
   def start_link(time_check, max_workers, min_workers) do
@@ -12,7 +12,7 @@ defmodule Lab2P1W3.Manager do
   end
 
   def calcLoad() do
-    currentWorkers = Lab2P1W2.WorkerPool.whichWorkers() |> Enum.map(fn {_, pid, _, _} -> pid end)
+    currentWorkers = WorkerPool.whichWorkers() |> Enum.map(fn {_, pid, _, _} -> pid end)
     numWorkers = Enum.count(currentWorkers)
     currentLoad = Enum.reduce(currentWorkers, 0, fn pid, acc ->
       {_, queue} = Process.info(pid, :message_queue_len)
@@ -27,27 +27,13 @@ defmodule Lab2P1W3.Manager do
     IO.inspect("Current load: #{laFormula}")
     cond do
       laFormula > 0.8 and numWorkers < max_worker ->
-        Lab2P1W2.WorkerPool.addWorker()
+        WorkerPool.addWorker()
       laFormula < 0.2 and numWorkers > min_worker ->
-        Lab2P1W2.WorkerPool.removeWorker()
+        WorkerPool.removeWorker()
       true ->
         :no_change
     end
     Process.send_after(self(), :manage, time_check)
     {:noreply, {time_check, max_worker, min_worker}}
-  end
-end
-
-defmodule Lab2P1W3.BadWordChecker do
-  def checkAndChange(tweet) do
-    jason = File.read!("lib/bad-words.json")
-    bad_words = Jason.decode!(jason)
-    tweet = Regex.replace(~r/(\w+)/, tweet, fn word ->
-      if Enum.member?(bad_words, String.downcase(word)) do
-        String.replace(String.downcase(word), ~r/./, "*")
-      else
-        word
-      end
-    end)
   end
 end
