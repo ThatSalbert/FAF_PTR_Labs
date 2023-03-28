@@ -24,8 +24,9 @@ defmodule Lab2P1W1.Reader do
     "event: \"message\"\n\ndata: " <> message = chunk
     {success, response} = Jason.decode(String.trim(message))
     if success == :ok do
-      tweet = Map.get(response, "message") |> Map.get("tweet") |> Map.get("text")
+      tweet = Map.get(response, "message") |> Map.get("tweet")
       send(Lab2P1W2.LoadBalancer, {:tweet, tweet})
+
     end
     {:noreply, nil}
   end
@@ -50,7 +51,8 @@ defmodule Lab2P1W1.Printer do
 
   def handle_info({:tweet, tweet}, {name, min_time, max_time}) do
     :rand.uniform(max_time - min_time) + min_time |> Process.sleep
-    IO.puts "#{name}: #{inspect tweet}"
+    tweetToPrint = to_string(tweet)
+    IO.puts "#{name}: #{tweetToPrint}"
     {:noreply, {name, min_time, max_time}}
   end
 
@@ -75,19 +77,56 @@ defmodule Lab2P1W1.Supervisor do
   def init({min_time, max_time}) do
     children = [
       %{
-        id: Lab2P1W1.Printer,
+        id: :printer,
         start: {Lab2P1W1.Printer, :start_link, [:printer1, min_time, max_time]}
       },
       %{
-        id: Lab2P1W1.Reader1,
+        id: :reader1,
         start: {Lab2P1W1.Reader, :start_link, [:reader1, "http://localhost:4000/tweets/1"]}
       },
       %{
-        id: Lab2P1W1.Reader2,
+        id: :reader2,
         start: {Lab2P1W1.Reader, :start_link, [:reader2, "http://localhost:4000/tweets/2"]}
       },
+      %{
+        id: :hashtagPrinter,
+        start: {Lab2P1W1.HashtagPrinter, :start_link, []}
+      }
     ]
 
     Supervisor.init(children, strategy: :one_for_one)
+  end
+end
+
+defmodule Lab2P1W1.HashtagPrinter do
+  use GenServer
+
+  def start_link do
+    GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
+  end
+
+  def init(hashtagMap) do
+    Process.send_after(self(), :getMostUsedHashtag, 5000)
+    {:ok, hashtagMap}
+  end
+
+  def handle_info(:getMostUsedHashtag, hashtagMap) do
+    {mostUsedHashtag, count} = hashtagMap |> Map.to_list |> Enum.max_by(fn {_, count} -> count end)
+    IO.puts("\n")
+    IO.inspect "Most used hashtag: #{mostUsedHashtag} with #{count} occurences."
+    IO.puts("\n")
+    hashtagMap = %{}
+    Process.send_after(self(), :getMostUsedHashtag, 5000)
+    {:noreply, hashtagMap}
+  end
+
+  def handle_info({:tweet, hashtagList}, hashtagMap) do
+    hashtagMap = Enum.reduce(hashtagList, hashtagMap, fn hashtag, hashtagMap ->
+      case Map.get(hashtagMap, hashtag) do
+        nil -> Map.put(hashtagMap, hashtag, 1)
+        count -> Map.put(hashtagMap, hashtag, count + 1)
+      end
+    end)
+    {:noreply, hashtagMap}
   end
 end
