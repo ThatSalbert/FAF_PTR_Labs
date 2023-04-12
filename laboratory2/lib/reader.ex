@@ -16,7 +16,7 @@ defmodule Reader do
   end
 
   def handle_info(%HTTPoison.AsyncChunk{chunk: "event: \"message\"\n\ndata: {\"message\": panic}\n\n"}, _state) do
-    send(LoadBalancer, :panic)
+    send(GenericLoadBalancer, :panic)
     {:noreply, nil}
   end
 
@@ -25,8 +25,7 @@ defmodule Reader do
     {success, response} = Jason.decode(String.trim(message))
     if success == :ok do
       tweet = Map.get(response, "message") |> Map.get("tweet")
-      send(LoadBalancer, {:tweet, tweet})
-
+      send(GenericLoadBalancer, {:tweet, tweet})
     end
     {:noreply, nil}
   end

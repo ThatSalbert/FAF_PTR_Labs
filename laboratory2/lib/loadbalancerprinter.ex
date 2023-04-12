@@ -1,8 +1,8 @@
-defmodule LoadBalancer do
+defmodule LoadBalancerPrinter do
   use GenServer
 
   def start_link() do
-    num = WorkerPool.getNumWorkers()
+    num = WorkerPoolPrinter.getNumWorkers()
     GenServer.start_link(__MODULE__,  num, name: __MODULE__)
   end
 
@@ -11,7 +11,7 @@ defmodule LoadBalancer do
   end
 
   def handle_info({:tweet, tweet}, {current, _num}) do
-    currentNumWorkers = WorkerPool.getNumWorkers()
+    currentNumWorkers = WorkerPoolPrinter.getNumWorkers()
     id_gen = :"printer#{current + 1}"
     if Process.whereis(id_gen) != nil do
       tweetToSend = Map.get(tweet, "text") |> BadWordChecker.checkAndChange()
@@ -25,7 +25,7 @@ defmodule LoadBalancer do
   end
 
   def handle_info(:panic, {current, _num}) do
-    currentNumWorkers = WorkerPool.getNumWorkers()
+    currentNumWorkers = WorkerPoolPrinter.getNumWorkers()
     id_gen = :"printer#{current + 1}"
     if Process.whereis(id_gen) != nil do
       send(id_gen, :panic)

@@ -1,4 +1,4 @@
-defmodule WorkerPool do
+defmodule WorkerPoolPrinter do
   use Supervisor
 
   def start_link(min_time, max_time) do
@@ -25,18 +25,18 @@ defmodule WorkerPool do
   end
 
   def getNumWorkers() do
-    Supervisor.count_children(WorkerPool) |> Map.get(:specs)
+    Supervisor.count_children(WorkerPoolPrinter) |> Map.get(:specs)
   end
 
   def whichWorkers() do
-    IO.inspect(Supervisor.which_children(WorkerPool))
-    Supervisor.which_children(WorkerPool)
+    IO.inspect(Supervisor.which_children(WorkerPoolPrinter))
+    Supervisor.which_children(WorkerPoolPrinter)
   end
 
   def addWorker() do
     id = getNumWorkers() + 1
-    Supervisor.start_child(WorkerPool, %{
-      id: "printer#{id}",
+    Supervisor.start_child(WorkerPoolPrinter, %{
+      id: :"printer#{id}",
       start: {Printer, :start_link, [:"printer#{id}", 10, 50]}
     })
     IO.inspect("Added worker printer#{id}")
@@ -44,8 +44,8 @@ defmodule WorkerPool do
 
   def removeWorker() do
     workers = whichWorkers() |> Enum.map(fn {id, _, _, _} -> id end)
-    Supervisor.terminate_child(WorkerPool, List.first(workers))
-    Supervisor.delete_child(WorkerPool, List.first(workers))
+    Supervisor.terminate_child(WorkerPoolPrinter, List.first(workers))
+    Supervisor.delete_child(WorkerPoolPrinter, List.first(workers))
     IO.inspect("Removed worker #{List.first(workers)}")
   end
 end
