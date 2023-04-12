@@ -11,11 +11,6 @@ defmodule Batcher do
     {:ok, {batch_size, time_to_wait, messagesToPrintMap, ticks}}
   end
 
-  def handle_info(:resetList, {batch_size, time_to_wait, messagesToPrintMap, ticks}) do
-    newMessagesToPrintMap = List.delete(messagesToPrintMap, messagesToPrintMap)
-    {:noreply, {batch_size, time_to_wait, newMessagesToPrintMap, ticks}}
-  end
-
   def handle_info(:printMessagesIfNotFull, {batch_size, time_to_wait, messagesToPrintMap, ticks}) do
     cond do
       Enum.count(messagesToPrintMap) != batch_size ->
@@ -24,7 +19,6 @@ defmodule Batcher do
         Enum.reduce(messagesToPrintMap, fn tweet, _ ->
           IO.inspect tweet
         end)
-        send(self(), :resetList)
         newMessagesToPrintMap = List.delete(messagesToPrintMap, messagesToPrintMap)
         ticksCalc = time_to_wait / 1000 |> trunc
         send(self(), {:setTicks, ticksCalc})
@@ -34,30 +28,23 @@ defmodule Batcher do
     end
   end
 
-  def handle_info(:printMessagesIfFull, {batch_size, time_to_wait, messagesToPrintMap, ticks}) do
-    cond do
-      Enum.count(messagesToPrintMap) == batch_size ->
-        IO.inspect("Printing because batch size")
-        IO.puts("")
-        Enum.reduce(messagesToPrintMap, fn tweet, _ ->
-          IO.inspect tweet
-        end)
-        send(self(), :resetList)
-        newMessagesToPrintMap = List.delete(messagesToPrintMap, messagesToPrintMap)
-        ticksCalc = time_to_wait / 1000 |> trunc
-        send(self(), {:setTicks, ticksCalc})
-        {:noreply, {batch_size, time_to_wait, newMessagesToPrintMap, ticks}}
-      length(messagesToPrintMap) != batch_size ->
-        {:noreply, {batch_size, time_to_wait, messagesToPrintMap, ticks}}
-    end
-  end
-
   def handle_info({:tweet, {id, tweet, sentiment, engagement}}, {batch_size, time_to_wait, messagesToPrintMap, ticks}) do
     messagesToPrint = "Tweet: #{tweet} | Sentiment: #{sentiment} | Engagement: #{engagement} | ID: #{id}"
     newMessagesToPrintMap = messagesToPrintMap ++ [messagesToPrint]
-    IO.inspect("#{newMessagesToPrintMap}")
-    send(self(), :printMessagesIfFull)
-    {:noreply, {batch_size, time_to_wait, newMessagesToPrintMap, ticks}}
+    currentMap = if length(newMessagesToPrintMap) == batch_size do
+      IO.inspect("Printing because batch size")
+      IO.puts("")
+      Enum.reduce(newMessagesToPrintMap, fn tweet, _ ->
+        IO.inspect tweet
+      end)
+      newMessagesToPrintMap = []
+      ticksCalc = time_to_wait / 1000 |> trunc
+      send(self(), {:setTicks, ticksCalc})
+      newMessagesToPrintMap
+    else
+      newMessagesToPrintMap
+    end
+    {:noreply, {batch_size, time_to_wait, currentMap, ticks}}
   end
 
   def handle_info({:setTicks, setTheTicks}, state) do
