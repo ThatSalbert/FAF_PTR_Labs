@@ -8,7 +8,7 @@ defmodule Batcher do
   def init({batch_size, time_to_wait, messagesToPrintMap, currentTick}) do
     {:ok, {batch_size, time_to_wait, messagesToPrintMap, currentTick}}
   end
-  
+
   def handle_info({:tweet, {id, tweet, sentiment, engagement}}, {batch_size, time_to_wait, messagesToPrintMap, currentTick}) do
     tick = currentTick
     tickNow = System.system_time(:millisecond)
