@@ -5,16 +5,10 @@ defmodule ProducerSupervisor do
     Supervisor.start_link(__MODULE__, :ok, name: __MODULE__)
   end
 
-  def init do
+  def init(:ok) do
     children = [
-      %{
-        id: :producer1,
-        start: {Producer, :start_link, []}
-      },
-      %{
-        id: :producer2,
-        start: {Producer, :start_link, []}
-      },
+      {Task.Supervisor, name: MainProducerSupervisor},
+      {Producer, 8000}
     ]
 
     Supervisor.init(children, strategy: :one_for_one)

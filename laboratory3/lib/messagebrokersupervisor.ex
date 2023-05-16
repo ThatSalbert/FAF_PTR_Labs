@@ -5,18 +5,10 @@ defmodule MessageBrokerSupervisor do
     Supervisor.start_link(__MODULE__, :ok, name: __MODULE__)
   end
 
-  def init do
+  def init(:ok) do
     children = [
       %{
-        id: :consumerhandler,
-        start: {ConsumerHandler, :start_link, []}
-      },
-      %{
-        id: :producerhandler,
-        start: {ProducerHandler, :start_link, []}
-      },
-      %{
-        id: :messagebroker,
+        id: :message_broker,
         start: {MessageBroker, :start_link, []}
       }
     ]

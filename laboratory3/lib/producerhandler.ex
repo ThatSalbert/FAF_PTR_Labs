@@ -1,12 +1,21 @@
 defmodule ProducerHandler do
-  use GenServer
+  require Logger
 
-  def start_link do
-    GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
+  def handle_stuff(socket) do
+    case :gen_tcp.recv(socket, 0) do
+      {:ok, data} ->
+        Logger.info("Producer received: #{data}")
+        send_to_consumer(data)
+        handle_stuff(socket)
+      {:error, :closed} ->
+        Logger.info("Producer closed")
+      {:error, reason} ->
+        Logger.info("Producer error: #{reason}")
+    end
   end
 
-  def init(:ok) do
-    IO.inspect("ProducerHandler started")
-    {:ok, nil}
+  defp send_to_consumer(data) do
+    {:ok, socket} = :gen_tcp.connect('localhost', 8001, [:binary, packet: :line, active: false])
+    :gen_tcp.send(socket, data)
   end
 end

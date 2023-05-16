@@ -5,16 +5,10 @@ defmodule ConsumerSupervisor do
     Supervisor.start_link(__MODULE__, :ok, name: __MODULE__)
   end
 
-  def init do
+  def init(:ok) do
     children = [
-      %{
-        id: :consumer1,
-        start: {Consumer, :start_link, []}
-      },
-      %{
-        id: :consumer2,
-        start: {Consumer, :start_link, []}
-      },
+      {Task.Supervisor, name: MainConsumerSupervisor},
+      {Consumer, 8001}
     ]
 
     IO.inspect("ConsumerSupervisor started")
