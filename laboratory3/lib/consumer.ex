@@ -13,10 +13,14 @@ defmodule Consumer do
   end
 
   def loop(socket) do
-    {:ok, client} = :gen_tcp.accept(socket)
-    Logger.info("Consumer accepted")
-    {:ok, pid} = Task.Supervisor.start_child(MainConsumerSupervisor, ConsumerHandler, :handle_stuff, [client])
-    :ok = :gen_tcp.controlling_process(client, pid)
-    loop(socket)
+    case :gen_tcp.accept(socket) do
+      {:ok, client_socket} ->
+        Logger.info("Consumer accepted")
+        {:ok, pid} = Task.Supervisor.start_child(MainConsumerSupervisor, fn() -> ConsumerHandler.handle_stuff(client_socket) end)
+        :ok = :gen_tcp.controlling_process(client_socket, pid)
+        loop(socket)
+      {:error, reason} ->
+        Logger.info("Consumer error: #{reason}")
+    end
   end
 end

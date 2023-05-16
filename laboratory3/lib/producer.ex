@@ -13,10 +13,15 @@ defmodule Producer do
   end
 
   def loop(socket) do
-    {:ok, client} = :gen_tcp.accept(socket)
-    Logger.info("Producer accepted")
-    {:ok, pid} = Task.Supervisor.start_child(MainProducerSupervisor, ProducerHandler, :handle_stuff, [client])
-    :ok = :gen_tcp.controlling_process(client, pid)
-    loop(socket)
+    case :gen_tcp.accept(socket) do
+      {:ok, client_socket} ->
+        Logger.info("Producer accepted")
+        {:ok, pid} = ProducerHandler.start_link()
+        :ok = :gen_tcp.controlling_process(client_socket, pid)
+        ProducerHandler.handle_stuff(client_socket)
+        loop(socket)
+      {:error, reason} ->
+        Logger.info("Producer error: #{reason}")
+    end
   end
 end

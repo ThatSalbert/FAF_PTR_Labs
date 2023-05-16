@@ -3,5 +3,7 @@ defmodule Laboratory3 do
 
   def start(_type, _args) do
     MainSupervisor.start_link()
+    :timer.sleep(1000)
+    Generator.start_link()
   end
 end
